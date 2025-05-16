@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Thời gian làm đề - THPT Nguyễn Thượng Hiền</title>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: 'Be Vietnam Pro', sans-serif;
+      background: url('thptnth.png') no-repeat center center fixed;
+      background-size: cover;
+      position: relative;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(255, 255, 255, 0.85);
+      z-index: 0;
+    }
+
+    .logo {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 10;
+      width: 80px;
+      height: auto;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 450px;
+      margin: 120px auto;
+      background-color: rgba(255, 255, 255, 0.95);
+      padding: 40px 30px 50px;
+      border-radius: 16px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.15);
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 30px;
+      color: #000;
+    }
+
+    select, input {
+      font-family: 'Be Vietnam Pro', sans-serif;
+      padding: 12px 14px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: 1px solid #aaa;
+      background: #fff;
+      margin-bottom: 16px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .time-inputs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .time-inputs input {
+      flex: 1;
+      text-align: center;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      font-weight: bold;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+
+    button:hover:not(:disabled) {
+      background-color: #388E3C;
+    }
+
+    button:disabled {
+      background-color: #999;
+      cursor: not-allowed;
+    }
+
+    #taskList {
+      margin-top: 10px;
+    }
+
+    .task {
+      background: #eaf9ea;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      position: relative;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .task span {
+      display: block;
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+
+    .buttons-group {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .task button {
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-weight: 600;
+    }
+
+    .delete-btn {
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      background: #e53935;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      font-weight: bold;
+      font-size: 18px;
+      line-height: 26px;
+      text-align: center;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .delete-btn:hover {
+      background: #b71c1c;
+    }
+  </style>
+</head>
+<body>
+  <img src="nth.png" alt="Logo trường" class="logo" />
+
+  <div class="container">
+    <h1>Thời gian làm đề</h1>
+
+    <select id="taskName">
+      <option value="" disabled selected>Chọn môn học</option>
+      <option value="Toán học">Toán học</option>
+      <option value="Ngữ Văn">Ngữ Văn</option>
+      <option value="Tiếng Anh">Tiếng Anh</option>
+      <option value="Vật lí">Vật lí</option>
+      <option value="Hóa học">Hóa học</option>
+      <option value="Sinh học">Sinh học</option>
+      <option value="Lịch sử">Lịch sử</option>
+      <option value="Địa lí">Địa lí</option>
+    </select>
+
+    <div class="time-inputs">
+      <input type="number" id="hours" placeholder="Giờ" min="0" />
+      <input type="number" id="minutes" placeholder="Phút" min="0" />
+    </div>
+
+    <button onclick="addTask()">Thêm</button>
+
+    <div id="taskList"></div>
+  </div>
+
+  <audio id="alertSound" src="alert_10min.wav" preload="auto"></audio>
+  <audio id="endSound" src="end_time.wav" preload="auto"></audio>
+
+  <script>
+    function addTask() {
+      const name = document.getElementById("taskName").value;
+      const hours = parseInt(document.getElementById("hours").value) || 0;
+      const minutes = parseInt(document.getElementById("minutes").value) || 0;
+      const totalSeconds = hours * 3600 + minutes * 60;
+
+      if (!name || totalSeconds <= 0) return;
+
+      let timeLeft = totalSeconds;
+      let countdown;
+
+      const taskDiv = document.createElement("div");
+      taskDiv.className = "task";
+
+      const nameSpan = document.createElement("span");
+      nameSpan.innerText = name;
+
+      const timerSpan = document.createElement("span");
+      timerSpan.innerText = formatTime(timeLeft);
+
+      const startBtn = document.createElement("button");
+      startBtn.innerText = "Bắt đầu";
+      const stopBtn = document.createElement("button");
+      stopBtn.innerText = "Dừng";
+      stopBtn.disabled = true;
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "delete-btn";
+      deleteBtn.innerHTML = "&#10005;";
+
+      startBtn.onclick = () => {
+        if (countdown) return;
+        countdown = setInterval(() => {
+          if (timeLeft > 0) {
+            timeLeft--;
+            timerSpan.innerText = formatTime(timeLeft);
+            if (timeLeft === 600) {
+              const alertAudio = document.getElementById("alertSound");
+              alertAudio.volume = 0.7;
+              alertAudio.play();
+            }
+          } else {
+            clearInterval(countdown);
+            timerSpan.innerText = "Hết giờ!";
+            startBtn.disabled = true;
+            stopBtn.disabled = true;
+            const endAudio = document.getElementById("endSound");
+            endAudio.volume = 0.7;
+            endAudio.play();
+          }
+        }, 1000);
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+      };
+
+      stopBtn.onclick = () => {
+        clearInterval(countdown);
+        countdown = null;
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+      };
+
+      deleteBtn.onclick = () => {
+        clearInterval(countdown);
+        taskDiv.remove();
+      };
+
+      const buttonsGroup = document.createElement("div");
+      buttonsGroup.className = "buttons-group";
+      buttonsGroup.appendChild(startBtn);
+      buttonsGroup.appendChild(stopBtn);
+
+      taskDiv.appendChild(nameSpan);
+      taskDiv.appendChild(timerSpan);
+      taskDiv.appendChild(buttonsGroup);
+      taskDiv.appendChild(deleteBtn);
+
+      document.getElementById("taskList").appendChild(taskDiv);
+
+      document.getElementById("taskName").selectedIndex = 0;
+      document.getElementById("hours").value = "";
+      document.getElementById("minutes").value = "";
+    }
+
+    function formatTime(seconds) {
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = seconds % 60;
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+  </script>
+</body>
+</html>
